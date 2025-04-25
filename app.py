@@ -12,9 +12,19 @@ from linebot.models import (
     ImageSendMessage)
 from linebot.exceptions import InvalidSignatureError
 import logging
+import firebase_admin
+from firebase_admin import credentials, initialize_app,firestore
+import google.generativeai as genai
 
 # 加載 .env 文件中的變數
 load_dotenv()
+
+# Firebase 初始化
+######################################################
+cred = credentials.Certificate("firebase_key.json")  # 放你的金鑰路徑
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+######################################################
 
 # 從環境變數中讀取 LINE 的 Channel Access Token 和 Channel Secret
 line_token = os.getenv('LINE_TOKEN')
@@ -56,17 +66,30 @@ def callback():
 # 設置一個事件處理器來處理 TextMessage 事件
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event: Event):
+    reply_token=event.reply_token
     if event.message.type == "text":
         user_message = event.message.text  # 使用者的訊息
         app.logger.info(f"收到的訊息: {user_message}")
 
-        # 使用 GPT 生成回應
-        reply_text = ("你說了：" + user_message)
+        # 存到 Firestore（範例結構: GDG/W3/records/{儲存訊息}）
+        ###################################################################
+        reply_text = "你說了：" + user_message
+        line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
+            
+        doc_address = db.collection("GDG").document("W3")
+        doc = doc_address.get()
+        if doc.exists:
+            doc_data = doc.to_dict()
+            history = doc_data.get("record", [])
+        else:
+            history = []
+        print(history)
 
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=reply_text)
-        )
+        history.append(reply_text)
+
+        doc_address.set({"record": history})
+        ###################################################################
+
 # 應用程序入口點
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
