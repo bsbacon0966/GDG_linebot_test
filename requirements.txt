@@ -6,3 +6,13 @@ gunicorn
 pymongo
 imgurpython
 requests
+flask
+diffusers
+transformers
+torch
+Pillow
+hf_xet
+accelerate
+openai
+firebase_admin
+google.generativeai
