@@ -15,22 +15,16 @@ import logging
 import firebase_admin
 from firebase_admin import credentials, initialize_app,firestore
 import google.generativeai as genai
-import json
+
 # 加載 .env 文件中的變數
 load_dotenv()
 
-# === 初始化 Firebase ===
-firebase_cred_str = os.getenv("FIREBASE_KEY") #放在遠端得環境變數中
-firebase_initialized = False
-if firebase_cred_str:
-    cred_dict = json.loads(firebase_cred_str)  # 將 JSON 字串轉回 dict
-    cred = credentials.Certificate(cred_dict)
-    initialize_app(cred)
-    db = firestore.client()
-    firebase_initialized = True
-else:
-    raise ValueError("未設定 FIREBASE_CREDENTIAL_JSON")
-#############################################################################
+# Firebase 初始化
+######################################################
+cred = credentials.Certificate("firebase_key.json")  # 放你的金鑰路徑
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+######################################################
 
 # 從環境變數中讀取 LINE 的 Channel Access Token 和 Channel Secret
 line_token = os.getenv('LINE_TOKEN')
